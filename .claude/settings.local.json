@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(npm --version)",
+      "Bash(docker --version)",
+      "Bash(docker compose:*)",
+      "Bash(git --version)",
+      "Bash(make --version)",
+      "Bash(kubectl version:*)",
+      "Bash(minikube version:*)",
+      "Bash(helm version:*)",
+      "Bash(openssl version:*)",
+      "Bash(curl --version)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)"
+    ]
+  }
+}

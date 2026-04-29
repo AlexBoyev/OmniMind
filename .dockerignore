@@ -1,0 +1,56 @@
+# Version control
+.git
+.gitignore
+
+# Environment (never bake secrets into images)
+.env
+.env.local
+.env.*.local
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+*.egg-info/
+
+# Node artifacts
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# Tests
+tests/
+backend/tests/
+frontend/src/**/*.test.*
+frontend/src/**/*.spec.*
+
+# Docs & markdown
+*.md
+docs/
+.github/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Misc
+*.bak
+*.tmp
+Thumbs.db
