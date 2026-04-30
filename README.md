@@ -21,32 +21,36 @@ OmniMind is a multi-user web platform featuring JWT authentication, role-based a
 ## Quick Start
 
 ```bash
-# 1. Copy and configure environment variables
+# 1. Copy environment template
 cp .env.example .env
-# Edit .env — at minimum, set SECRET_KEY to the value from phase 1 setup
 
-# 2. Build and start the full stack (Linux/macOS/Git Bash)
-make build
+# 2. Edit .env — set these three secrets (all others have safe defaults):
+#    SECRET_KEY    → openssl rand -hex 64
+#    POSTGRES_PASSWORD → openssl rand -base64 32
+#    REDIS_PASSWORD    → openssl rand -base64 32
+#    Or just run: bash scripts/setup-local.sh
 
-# 2. (Windows PowerShell)
+# 3. Build and start the full stack (Linux/macOS/Git Bash)
+docker compose up --build -d
+# (Windows PowerShell)
 .\make.ps1 build
 
-# 3. Open the application
+# 4. Wait ~30s for migrations to complete, then open:
 #    Frontend:  http://localhost:3000
 #    Backend:   http://localhost:8000/docs
 #    pgAdmin:   http://localhost:5050
+#    Mailpit:   http://localhost:8025
 
-# 4. Run database migrations and seed default users
-make migrate
-make seed
+# 5. Login as admin
+#    http://localhost:3000  →  admin@omnimind.local / AdminPass123!
 ```
 
 Default credentials after seeding:
 
 | Role | Email | Password |
 |------|-------|----------|
-| Admin | admin@omnimind.local | Admin1234! |
-| User | user@omnimind.local | User1234! |
+| Admin | admin@omnimind.local | AdminPass123! |
+| User | user@omnimind.local | UserPass123! |
 
 ## Project Structure
 
@@ -92,9 +96,9 @@ See [docs/PHASES.md](docs/PHASES.md) for the 8-phase development workflow.
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Project Skeleton + Environment | Complete |
-| 2 | Backend MVP (FastAPI + Auth + DB + Seed) | Pending |
-| 3 | Frontend MVP (React + Auth + RBAC) | Pending |
-| 4 | Docker Compose Full Stack | Pending |
+| 2 | Backend MVP (FastAPI + Auth + DB + Seed) | Complete |
+| 3 | Frontend MVP (React + Auth + RBAC) | Complete |
+| 4 | Docker Compose Full Stack | Complete |
 | 5 | Minikube + Kustomize K8s Manifests | Pending |
 | 6 | Jenkins + ArgoCD (GitOps Loop) | Pending |
 | 7 | Monitoring + Audit Log | Pending |

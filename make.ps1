@@ -52,19 +52,19 @@ function Invoke-MakeMigration {
     docker compose exec backend alembic revision --autogenerate -m $Msg
 }
 
+function Invoke-Test {
+    Write-Host "Running full test suite in isolated Docker stack..." -ForegroundColor Cyan
+    docker compose -f docker-compose.test.yml -p omnimind-test up --build --abort-on-container-exit --exit-code-from backend
+}
+
 function Invoke-TestBackend {
-    Write-Host "Running backend pytest suite..." -ForegroundColor Cyan
+    Write-Host "Running backend pytest suite inside running container..." -ForegroundColor Cyan
     docker compose exec backend pytest
 }
 
 function Invoke-TestFrontend {
-    Write-Host "Running frontend test suite..." -ForegroundColor Cyan
-    docker compose exec frontend npm test
-}
-
-function Invoke-Test {
-    Invoke-TestBackend
-    Invoke-TestFrontend
+    Write-Host "Running frontend test suite inside running container..." -ForegroundColor Cyan
+    docker compose exec frontend npm test -- --run
 }
 
 function Invoke-Lint {

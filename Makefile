@@ -45,16 +45,17 @@ makemigration: ## Generate a new Alembic migration (set MSG=your message)
 
 # ─── Testing ──────────────────────────────────────────────────────────────────
 
+.PHONY: test
+test: ## Run full test suite in isolated Docker stack (CI-safe)
+	$(COMPOSE) -f docker-compose.test.yml -p omnimind-test up --build --abort-on-container-exit --exit-code-from backend
+
 .PHONY: test-backend
-test-backend: ## Run backend pytest suite inside the container
+test-backend: ## Run backend pytest suite inside the running backend container
 	$(COMPOSE) exec backend pytest
 
 .PHONY: test-frontend
-test-frontend: ## Run frontend test suite inside the container
-	$(COMPOSE) exec frontend npm test
-
-.PHONY: test
-test: test-backend test-frontend ## Run all tests
+test-frontend: ## Run frontend test suite inside the running frontend container
+	$(COMPOSE) exec frontend npm test -- --run
 
 # ─── Code Quality ─────────────────────────────────────────────────────────────
 

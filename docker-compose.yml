@@ -1,0 +1,182 @@
+# =============================================================================
+# OmniMind — Docker Compose Full Stack (Development)
+# Usage: docker compose up --build -d
+# =============================================================================
+
+x-common-env: &common-env
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  APP_NAME: ${APP_NAME:-OmniMind}
+  APP_VERSION: ${APP_VERSION:-0.1.0}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  SECRET_KEY: ${SECRET_KEY}
+  ALGORITHM: ${ALGORITHM:-HS256}
+  ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-15}
+  REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+  DATABASE_URL: ${DATABASE_URL}
+  REDIS_URL: ${REDIS_URL}
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  CORS_ORIGINS: '["http://localhost:3000","http://localhost:5173","http://localhost"]'
+  ALLOWED_HOSTS: '["localhost","127.0.0.1"]'
+  RATE_LIMIT_DEFAULT: ${RATE_LIMIT_DEFAULT:-100/minute}
+  RATE_LIMIT_AUTH: ${RATE_LIMIT_AUTH:-10/minute}
+  BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+  SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+  SESSION_COOKIE_SAMESITE: ${SESSION_COOKIE_SAMESITE:-lax}
+  SESSION_COOKIE_HTTPONLY: ${SESSION_COOKIE_HTTPONLY:-true}
+  SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@omnimind.local}
+  SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-AdminPass123!}
+  SEED_ADMIN_FULL_NAME: ${SEED_ADMIN_FULL_NAME:-Admin User}
+  SEED_USER_EMAIL: ${SEED_USER_EMAIL:-user@omnimind.local}
+  SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-UserPass123!}
+  SEED_USER_FULL_NAME: ${SEED_USER_FULL_NAME:-Regular User}
+
+networks:
+  appnet:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  frontend_node_modules:
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    networks: [appnet]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-omnimind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-omnimind}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-omnimind} -d ${POSTGRES_DB:-omnimind}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks: [appnet]
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── Migrate (runs once, then exits) ────────────────────────────────────────
+  migrate:
+    build:
+      context: ./backend
+      target: development
+    networks: [appnet]
+    environment:
+      <<: *common-env
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "alembic upgrade head && python -m app.db.seed"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # ── Backend ─────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      target: development
+    networks: [appnet]
+    environment:
+      <<: *common-env
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8001:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  # ── Frontend ────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    networks: [appnet]
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+      VITE_APP_NAME: ${VITE_APP_NAME:-OmniMind}
+      VITE_ENABLE_JARVIS: ${VITE_ENABLE_JARVIS:-false}
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    command: npm run dev -- --host 0.0.0.0 --port 3000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # ── Nginx (reverse proxy) ───────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    networks: [appnet]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+  # ── pgAdmin ─────────────────────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    networks: [appnet]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@omnimind.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-pgadmin_password}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # ── Mailpit (SMTP dev server) ───────────────────────────────────────────────
+  mailpit:
+    image: axllent/mailpit:latest
+    networks: [appnet]
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    restart: unless-stopped

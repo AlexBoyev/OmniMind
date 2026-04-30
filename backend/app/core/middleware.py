@@ -59,8 +59,8 @@ def register_middlewares(app: FastAPI) -> None:
         allow_headers=["*"],
     )
 
-    # Trusted hosts (skip in development to allow curl / local testing)
-    if settings.ENVIRONMENT != "development":
+    # Trusted hosts (skip in development/test to allow curl / local testing)
+    if settings.ENVIRONMENT not in ("development", "test"):
         app.add_middleware(
             TrustedHostMiddleware,
             allowed_hosts=settings.ALLOWED_HOSTS,
