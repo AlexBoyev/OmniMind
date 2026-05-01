@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migration-job
+  namespace: omnimind
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: ghcr.io/alexboyev/omnimind-backend:placeholder
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Postgres to be ready..."
+              python -c "
+              import time, os, sys
+              try:
+                  import psycopg2
+                  url = os.environ.get('DATABASE_URL','').replace('postgresql+asyncpg://','postgresql://').replace('postgresql+psycopg2://','postgresql://')
+                  for i in range(30):
+                      try:
+                          conn = psycopg2.connect(url, connect_timeout=3)
+                          conn.close()
+                          print('Postgres ready!')
+                          sys.exit(0)
+                      except Exception as e:
+                          print(f'Waiting ({i+1}/30): {e}')
+                          time.sleep(2)
+                  print('Postgres not ready after 60s')
+                  sys.exit(1)
+              except ImportError:
+                  print('psycopg2 not found, proceeding anyway')
+              "
+              echo "Running migrations..."
+              alembic upgrade head
+              echo "Seeding database..."
+              python -m app.db.seed
+          envFrom:
+            - configMapRef:
+                name: omnimind-config
+            - secretRef:
+                name: omnimind-secrets

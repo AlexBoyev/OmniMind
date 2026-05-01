@@ -69,6 +69,34 @@ format: ## Auto-format backend (ruff format) and frontend (prettier)
 
 # ─── Kubernetes / Minikube ────────────────────────────────────────────────────
 
+.PHONY: minikube-setup
+minikube-setup: ## Start Minikube, enable addons, install Sealed Secrets controller
+	bash scripts/install-minikube-deps.sh
+
+.PHONY: minikube-seal
+minikube-seal: ## Seal .env secrets into k8s/base/secrets.sealed.yaml
+	bash scripts/seal-secrets.sh
+
+.PHONY: minikube-build
+minikube-build: ## Build backend + frontend images into Minikube's Docker registry
+	bash scripts/build-images-into-minikube.sh
+
+.PHONY: minikube-deploy-staging
+minikube-deploy-staging: ## Deploy staging overlay to Minikube
+	bash scripts/deploy-staging.sh
+
+.PHONY: minikube-down
+minikube-down: ## Completely delete the Minikube cluster
+	minikube delete
+
+.PHONY: minikube-ip
+minikube-ip: ## Print Minikube IP (add to /etc/hosts as omnimind.local)
+	minikube ip
+
+.PHONY: minikube-tunnel
+minikube-tunnel: ## Start Minikube tunnel for LoadBalancer services
+	minikube tunnel
+
 .PHONY: minikube-up
 minikube-up: ## Start Minikube with 4 CPUs and 8 GB RAM
 	minikube start --cpus=4 --memory=8192 --driver=docker
@@ -78,11 +106,11 @@ minikube-stop: ## Stop Minikube without deleting the cluster
 	minikube stop
 
 .PHONY: minikube-delete
-minikube-delete: ## Completely delete the Minikube cluster
+minikube-delete: ## Completely delete the Minikube cluster (alias: minikube-down)
 	minikube delete
 
 .PHONY: minikube-deploy
-minikube-deploy: ## Apply staging Kustomize overlay to Minikube
+minikube-deploy: ## Apply staging Kustomize overlay to Minikube (alias: minikube-deploy-staging)
 	kubectl apply -k k8s/overlays/staging
 
 .PHONY: minikube-status

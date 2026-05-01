@@ -87,6 +87,41 @@ function Invoke-Format {
     Pop-Location
 }
 
+function Invoke-MinikubeSetup {
+    Write-Host "Starting Minikube, enabling addons, installing Sealed Secrets..." -ForegroundColor Cyan
+    & scripts\install-minikube-deps.ps1
+}
+
+function Invoke-MinikubeSeal {
+    Write-Host "Sealing secrets from .env..." -ForegroundColor Cyan
+    & scripts\seal-secrets.ps1
+}
+
+function Invoke-MinikubeBuild {
+    Write-Host "Building images into Minikube's Docker registry..." -ForegroundColor Cyan
+    & scripts\build-images-into-minikube.ps1
+}
+
+function Invoke-MinikubeDeployStaging {
+    Write-Host "Deploying staging overlay to Minikube..." -ForegroundColor Cyan
+    & scripts\deploy-staging.ps1
+}
+
+function Invoke-MinikubeDown {
+    Write-Host "Deleting Minikube cluster..." -ForegroundColor Yellow
+    minikube delete
+}
+
+function Invoke-MinikubeIP {
+    Write-Host "Minikube IP:" -ForegroundColor Cyan
+    minikube ip
+}
+
+function Invoke-MinikubeTunnel {
+    Write-Host "Starting Minikube tunnel (requires admin)..." -ForegroundColor Cyan
+    minikube tunnel
+}
+
 function Invoke-MinikubeUp {
     Write-Host "Starting Minikube (4 CPUs, 8 GB RAM)..." -ForegroundColor Cyan
     minikube start --cpus=4 --memory=8192 --driver=docker
@@ -131,11 +166,16 @@ function Invoke-Help {
         @{ Name = "test";             Desc = "Run all tests" },
         @{ Name = "lint";             Desc = "Lint backend (ruff) and frontend (eslint)" },
         @{ Name = "format";           Desc = "Auto-format backend (ruff) and frontend (prettier)" },
-        @{ Name = "minikube-up";      Desc = "Start Minikube with 4 CPUs and 8 GB RAM" },
-        @{ Name = "minikube-stop";    Desc = "Stop Minikube without deleting the cluster" },
-        @{ Name = "minikube-delete";  Desc = "Completely delete the Minikube cluster" },
-        @{ Name = "minikube-deploy";  Desc = "Apply staging Kustomize overlay to Minikube" },
-        @{ Name = "minikube-status";  Desc = "Show Minikube and kubectl cluster status" },
+        @{ Name = "minikube-setup";          Desc = "Start Minikube, enable addons, install Sealed Secrets" },
+        @{ Name = "minikube-seal";           Desc = "Seal .env secrets into k8s/base/secrets.sealed.yaml" },
+        @{ Name = "minikube-build";          Desc = "Build images into Minikube's Docker registry" },
+        @{ Name = "minikube-deploy-staging"; Desc = "Deploy staging overlay to Minikube" },
+        @{ Name = "minikube-down";           Desc = "Completely delete the Minikube cluster" },
+        @{ Name = "minikube-ip";             Desc = "Print Minikube IP (add to hosts as omnimind.local)" },
+        @{ Name = "minikube-tunnel";         Desc = "Start Minikube tunnel for LoadBalancer services" },
+        @{ Name = "minikube-up";             Desc = "Start Minikube with 4 CPUs and 8 GB RAM" },
+        @{ Name = "minikube-stop";           Desc = "Stop Minikube without deleting the cluster" },
+        @{ Name = "minikube-status";         Desc = "Show Minikube and kubectl cluster status" },
         @{ Name = "help";             Desc = "Show this help message" }
     )
     foreach ($t in $targets) {
@@ -158,11 +198,18 @@ switch ($Target) {
     "test"             { Invoke-Test }
     "lint"             { Invoke-Lint }
     "format"           { Invoke-Format }
-    "minikube-up"      { Invoke-MinikubeUp }
-    "minikube-stop"    { Invoke-MinikubeStop }
-    "minikube-delete"  { Invoke-MinikubeDelete }
-    "minikube-deploy"  { Invoke-MinikubeDeploy }
-    "minikube-status"  { Invoke-MinikubeStatus }
+    "minikube-setup"          { Invoke-MinikubeSetup }
+    "minikube-seal"           { Invoke-MinikubeSeal }
+    "minikube-build"          { Invoke-MinikubeBuild }
+    "minikube-deploy-staging" { Invoke-MinikubeDeployStaging }
+    "minikube-down"           { Invoke-MinikubeDown }
+    "minikube-ip"             { Invoke-MinikubeIP }
+    "minikube-tunnel"         { Invoke-MinikubeTunnel }
+    "minikube-up"             { Invoke-MinikubeUp }
+    "minikube-stop"           { Invoke-MinikubeStop }
+    "minikube-delete"         { Invoke-MinikubeDelete }
+    "minikube-deploy"         { Invoke-MinikubeDeploy }
+    "minikube-status"         { Invoke-MinikubeStatus }
     "help"             { Invoke-Help }
     default {
         Write-Host "Unknown target: '$Target'. Run .\make.ps1 help to see available targets." -ForegroundColor Red

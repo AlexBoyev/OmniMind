@@ -1,0 +1,49 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: omnimind-staging
+namePrefix: staging-
+resources:
+  - ../../base
+images:
+  - name: ghcr.io/alexboyev/omnimind-backend
+    newTag: local
+  - name: ghcr.io/alexboyev/omnimind-frontend
+    newTag: local
+patches:
+  - target:
+      kind: Deployment
+      name: backend
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target:
+      kind: Deployment
+      name: frontend
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target:
+      kind: ConfigMap
+      name: omnimind-config
+    patch: |-
+      - op: replace
+        path: /data/ENVIRONMENT
+        value: staging
+      - op: replace
+        path: /data/CORS_ORIGINS
+        value: '["http://omnimind.local","http://localhost:3000"]'
+      - op: replace
+        path: /data/ALLOWED_HOSTS
+        value: '["omnimind.local","localhost","127.0.0.1"]'
+      - op: replace
+        path: /data/SESSION_COOKIE_SECURE
+        value: "false"
+  - target:
+      kind: SealedSecret
+      name: omnimind-secrets
+    patch: |-
+      - op: replace
+        path: /spec/template/metadata/name
+        value: staging-omnimind-secrets

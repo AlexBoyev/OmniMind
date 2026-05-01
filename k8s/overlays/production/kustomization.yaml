@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: omnimind-production
+namePrefix: prod-
+resources:
+  - ../../base
+images:
+  - name: ghcr.io/alexboyev/omnimind-backend
+    newTag: local
+  - name: ghcr.io/alexboyev/omnimind-frontend
+    newTag: local
+patches:
+  - target:
+      kind: Deployment
+      name: backend
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: Deployment
+      name: frontend
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2

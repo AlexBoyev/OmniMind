@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: omnimind-config
+  namespace: omnimind
+data:
+  # General
+  ENVIRONMENT: "production"
+  APP_NAME: "OmniMind"
+  APP_VERSION: "0.1.0"
+  LOG_LEVEL: "INFO"
+
+  # Frontend (Vite build-time vars)
+  VITE_APP_NAME: "OmniMind"
+  VITE_ENABLE_JARVIS: "false"
+  VITE_API_URL: "http://omnimind.local"
+
+  # PostgreSQL
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "omnimind"
+  POSTGRES_USER: "omnimind"
+
+  # Redis
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+
+  # JWT
+  ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "15"
+  REFRESH_TOKEN_EXPIRE_DAYS: "7"
+
+  # CORS & Hosts — JSON list format required by pydantic-settings v2
+  CORS_ORIGINS: '["http://omnimind.local","http://localhost:3000"]'
+  ALLOWED_HOSTS: '["omnimind.local","localhost","127.0.0.1"]'
+
+  # Rate limiting
+  RATE_LIMIT_DEFAULT: "100/minute"
+  RATE_LIMIT_AUTH: "10/minute"
+  RATE_LIMIT_JARVIS: "20/minute"
+
+  # Session / bcrypt
+  BCRYPT_ROUNDS: "12"
+  SESSION_COOKIE_SECURE: "true"
+  SESSION_COOKIE_SAMESITE: "lax"
+  SESSION_COOKIE_HTTPONLY: "true"
+
+  # Seed user metadata (passwords are in the Secret)
+  SEED_ADMIN_EMAIL: "admin@omnimind.local"
+  SEED_ADMIN_FULL_NAME: "Admin User"
+  SEED_USER_EMAIL: "user@omnimind.local"
+  SEED_USER_FULL_NAME: "Regular User"
