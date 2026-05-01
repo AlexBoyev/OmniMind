@@ -20,12 +20,20 @@ export function Header() {
 
         <nav className="flex items-center gap-4">
           {isAdmin() && (
-            <Link
-              to="/admin/users"
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
-            >
-              Admin
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/admin/users"
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+              >
+                Users
+              </Link>
+              <Link
+                to="/admin/audit-log"
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+              >
+                Audit Log
+              </Link>
+            </div>
           )}
 
           <div className="relative">

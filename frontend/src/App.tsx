@@ -4,6 +4,7 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { UsersAdminPage } from '@/pages/admin/UsersAdminPage'
+import { AuditLogPage } from '@/pages/admin/AuditLogPage'
 import { ForbiddenPage } from '@/pages/ForbiddenPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
@@ -26,6 +27,14 @@ export default function App() {
         element={
           <ProtectedRoute requiredRole="admin">
             <UsersAdminPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/audit-log"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AuditLogPage />
           </ProtectedRoute>
         }
       />

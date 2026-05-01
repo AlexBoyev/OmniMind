@@ -25,6 +25,9 @@ bcrypt<4.0
 # Rate limiting
 slowapi==0.1.9
 
+# Metrics
+prometheus-fastapi-instrumentator==7.1.0
+
 # Logging
 structlog==25.3.0
 

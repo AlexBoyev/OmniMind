@@ -117,6 +117,24 @@ minikube-deploy: ## Apply staging Kustomize overlay to Minikube (alias: minikube
 minikube-status: ## Show Minikube and kubectl cluster status
 	minikube status && kubectl get nodes
 
+# ─── Monitoring ───────────────────────────────────────────────────────────────
+
+.PHONY: monitoring-install
+monitoring-install: ## Install Prometheus + Grafana + Loki in the monitoring namespace
+	bash scripts/install-monitoring.sh
+
+.PHONY: grafana-url
+grafana-url: ## Print Grafana URL
+	@echo "http://$(shell minikube ip):32002"
+
+.PHONY: grafana-password
+grafana-password: ## Print Grafana admin password
+	@echo "$${GRAFANA_ADMIN_PASSWORD:-changeme_grafana}"
+
+.PHONY: prometheus-url
+prometheus-url: ## Print Prometheus URL
+	@echo "http://$(shell minikube ip):32003"
+
 # ─── Jenkins ──────────────────────────────────────────────────────────────────
 
 .PHONY: jenkins-install

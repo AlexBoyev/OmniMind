@@ -7,6 +7,8 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
+from prometheus_fastapi_instrumentator import Instrumentator
+
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.core.middleware import register_middlewares
@@ -32,6 +34,8 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
+
+Instrumentator().instrument(app).expose(app, endpoint="/api/v1/metrics")
 
 # Rate limiter state
 app.state.limiter = limiter

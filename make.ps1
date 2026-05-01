@@ -148,6 +148,26 @@ function Invoke-MinikubeStatus {
     kubectl get nodes
 }
 
+function Invoke-MonitoringInstall {
+    Write-Host "Installing Prometheus + Grafana + Loki..." -ForegroundColor Cyan
+    & scripts\install-monitoring.ps1
+}
+
+function Invoke-GrafanaUrl {
+    $ip = & minikube ip
+    Write-Host "http://${ip}:32002" -ForegroundColor Green
+}
+
+function Invoke-GrafanaPassword {
+    $pw = if ($env:GRAFANA_ADMIN_PASSWORD) { $env:GRAFANA_ADMIN_PASSWORD } else { "changeme_grafana" }
+    Write-Host $pw -ForegroundColor Green
+}
+
+function Invoke-PrometheusUrl {
+    $ip = & minikube ip
+    Write-Host "http://${ip}:32003" -ForegroundColor Green
+}
+
 function Invoke-JenkinsInstall {
     Write-Host "Installing Jenkins via Helm..." -ForegroundColor Cyan
     & scripts\install-jenkins.ps1
@@ -213,6 +233,10 @@ function Invoke-Help {
         @{ Name = "minikube-up";             Desc = "Start Minikube with 4 CPUs and 8 GB RAM" },
         @{ Name = "minikube-stop";           Desc = "Stop Minikube without deleting the cluster" },
         @{ Name = "minikube-status";         Desc = "Show Minikube and kubectl cluster status" },
+        @{ Name = "monitoring-install"; Desc = "Install Prometheus + Grafana + Loki" },
+        @{ Name = "grafana-url";       Desc = "Print Grafana URL" },
+        @{ Name = "grafana-password";  Desc = "Print Grafana admin password" },
+        @{ Name = "prometheus-url";    Desc = "Print Prometheus URL" },
         @{ Name = "jenkins-install";   Desc = "Install Jenkins via Helm" },
         @{ Name = "jenkins-url";       Desc = "Print Jenkins URL" },
         @{ Name = "jenkins-password";  Desc = "Print Jenkins admin password" },
@@ -254,7 +278,11 @@ switch ($Target) {
     "minikube-delete"         { Invoke-MinikubeDelete }
     "minikube-deploy"         { Invoke-MinikubeDeploy }
     "minikube-status"         { Invoke-MinikubeStatus }
-    "jenkins-install"  { Invoke-JenkinsInstall }
+    "monitoring-install" { Invoke-MonitoringInstall }
+    "grafana-url"        { Invoke-GrafanaUrl }
+    "grafana-password"   { Invoke-GrafanaPassword }
+    "prometheus-url"     { Invoke-PrometheusUrl }
+    "jenkins-install"    { Invoke-JenkinsInstall }
     "jenkins-url"      { Invoke-JenkinsUrl }
     "jenkins-password" { Invoke-JenkinsPassword }
     "argocd-install"   { Invoke-ArgocdInstall }

@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +18,7 @@ from app.core.security import (
 from app.models.refresh_token import RefreshToken
 from app.models.user import Role, User
 from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse
+from app.services.audit_service import audit_service
 
 
 def _utcnow() -> datetime:
@@ -27,8 +28,9 @@ def _utcnow() -> datetime:
 class AuthService:
     # ─── Register ─────────────────────────────────────────────────────────────
 
-    async def register(self, db: AsyncSession, data: RegisterRequest) -> UserResponse:
-        # Check uniqueness
+    async def register(
+        self, db: AsyncSession, data: RegisterRequest, request: Request
+    ) -> UserResponse:
         existing = await self._get_by_email_or_username(db, data.email)
         if existing:
             raise HTTPException(
@@ -51,18 +53,27 @@ class AuthService:
         db.add(user)
         await db.flush()
         await db.refresh(user)
+        await audit_service.log(db, "register", request, user_id=user.id)
         return UserResponse.model_validate(user)
 
     # ─── Login ────────────────────────────────────────────────────────────────
 
-    async def login(self, db: AsyncSession, data: LoginRequest) -> tuple[str, str, User]:
+    async def login(
+        self, db: AsyncSession, data: LoginRequest, request: Request
+    ) -> tuple[str, str, User]:
         user = await self._get_by_email_or_username(db, data.email_or_username)
         if not user or not verify_password(data.password, user.hashed_password):
+            await audit_service.log(
+                db, "login_failed", request,
+                commit=True,
+                email_attempted=data.email_or_username,
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials.",
             )
         if not user.is_active:
+            await audit_service.log(db, "login_failed", request, user_id=user.id, commit=True)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Account is deactivated."
             )
@@ -70,7 +81,6 @@ class AuthService:
         access_token = create_access_token(str(user.id), user.role.value)
         refresh_token_jwt = create_refresh_token(str(user.id))
 
-        # Persist hashed refresh token
         from app.core.config import settings
 
         rt = RefreshToken(
@@ -82,6 +92,7 @@ class AuthService:
 
         user.last_login_at = _utcnow()
         await db.flush()
+        await audit_service.log(db, "login", request, user_id=user.id)
 
         return access_token, refresh_token_jwt, user
 
@@ -119,13 +130,17 @@ class AuthService:
 
     # ─── Logout ───────────────────────────────────────────────────────────────
 
-    async def logout(self, db: AsyncSession, refresh_token_jwt: str) -> None:
+    async def logout(
+        self, db: AsyncSession, refresh_token_jwt: str, request: Request,
+        user_id: str | None = None,
+    ) -> None:
         token_hash = hash_token(refresh_token_jwt)
         result = await db.execute(select(RefreshToken).where(RefreshToken.token_hash == token_hash))
         rt = result.scalar_one_or_none()
         if rt:
             rt.revoked = True
             await db.flush()
+        await audit_service.log(db, "logout", request, user_id=user_id)
 
     # ─── Internal ─────────────────────────────────────────────────────────────
 
