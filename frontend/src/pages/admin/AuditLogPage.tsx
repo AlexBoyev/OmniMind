@@ -1,76 +1,77 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
+import { format } from 'date-fns'
+import {
+  LogIn, LogOut, UserPlus, AlertCircle, Edit, Brain,
+  Shield, Activity, ChevronDown, ChevronUp, Filter, ChevronLeft, ChevronRight,
+} from 'lucide-react'
 import { adminApi, type AuditLogEntry } from '@/api/admin'
-import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 
-const ACTION_OPTIONS = [
-  'login', 'login_failed', 'logout', 'register',
-  'user_updated', 'role_changed', 'user_disabled',
-]
-
-const ACTION_COLORS: Record<string, string> = {
-  login: 'bg-green-100 text-green-800',
-  logout: 'bg-slate-100 text-slate-700',
-  register: 'bg-blue-100 text-blue-800',
-  login_failed: 'bg-red-100 text-red-800',
-  user_updated: 'bg-yellow-100 text-yellow-800',
-  role_changed: 'bg-purple-100 text-purple-800',
-  user_disabled: 'bg-orange-100 text-orange-800',
+const ACTION_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
+  login:              { icon: LogIn,       color: 'text-emerald-400', bg: 'bg-emerald-500/15', label: 'Login' },
+  login_failed:       { icon: AlertCircle, color: 'text-red-400',     bg: 'bg-red-500/15',     label: 'Failed Login' },
+  logout:             { icon: LogOut,      color: 'text-sky-400',     bg: 'bg-sky-500/15',     label: 'Logout' },
+  register:           { icon: UserPlus,    color: 'text-violet-400',  bg: 'bg-violet-500/15',  label: 'Register' },
+  user_updated:       { icon: Edit,        color: 'text-amber-400',   bg: 'bg-amber-500/15',   label: 'User Updated' },
+  jarvis_chat:        { icon: Brain,       color: 'text-primary',     bg: 'bg-primary/15',     label: 'Jarvis Chat' },
+  env_vars_updated:   { icon: Shield,      color: 'text-orange-400',  bg: 'bg-orange-500/15',  label: 'Env Updated' },
 }
 
-function ActionBadge({ action }: { action: string }) {
-  const cls = ACTION_COLORS[action] ?? 'bg-slate-100 text-slate-700'
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
-      {action}
-    </span>
-  )
-}
+const DEFAULT = { icon: Activity, color: 'text-muted-foreground', bg: 'bg-accent', label: 'Event' }
 
-function ExpandableRow({ log }: { log: AuditLogEntry }) {
+const ACTION_OPTIONS = Object.keys(ACTION_CONFIG)
+
+function LogEntry({ log }: { log: AuditLogEntry }) {
   const [open, setOpen] = useState(false)
+  const cfg = ACTION_CONFIG[log.action] ?? DEFAULT
+  const Icon = cfg.icon
   const hasExtra = log.metadata && Object.keys(log.metadata).length > 0
 
   return (
-    <>
-      <tr
-        className={`border-b border-slate-100 text-sm hover:bg-slate-50 ${hasExtra ? 'cursor-pointer' : ''}`}
-        onClick={() => hasExtra && setOpen((o) => !o)}
-      >
-        <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
-          {new Date(log.created_at).toLocaleString()}
-        </td>
-        <td className="px-4 py-3">
-          <ActionBadge action={log.action} />
-        </td>
-        <td className="px-4 py-3 font-mono text-xs text-slate-500 truncate max-w-[120px]">
-          {log.user_id ? log.user_id.slice(0, 8) + '…' : <span className="text-slate-300">—</span>}
-        </td>
-        <td className="px-4 py-3 text-slate-600">{log.ip_address}</td>
-        <td className="px-4 py-3 text-slate-500 truncate max-w-[160px]">
-          {log.resource_type
-            ? `${log.resource_type}${log.resource_id ? ':' + log.resource_id.slice(0, 8) : ''}`
-            : <span className="text-slate-300">—</span>}
-        </td>
-        <td className="px-4 py-3 text-right">
-          {hasExtra && (
-            open ? <ChevronUp className="inline h-4 w-4 text-slate-400" />
-                 : <ChevronDown className="inline h-4 w-4 text-slate-400" />
-          )}
-        </td>
-      </tr>
-      {open && hasExtra && (
-        <tr className="bg-slate-50 border-b border-slate-100">
-          <td colSpan={6} className="px-8 py-3">
-            <pre className="text-xs text-slate-600 overflow-x-auto">
+    <motion.div
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="relative flex gap-4 pl-4"
+    >
+      {/* Timeline dot */}
+      <div className={`absolute left-0 top-2.5 h-2.5 w-2.5 rounded-full border-2 border-background ${cfg.color.replace('text-', 'bg-')}`} />
+
+      <div className="flex-1 pb-4">
+        <div
+          className={`rounded-xl border border-border bg-card p-3.5 ${hasExtra ? 'cursor-pointer hover:border-border/80' : ''} transition-colors`}
+          onClick={() => hasExtra && setOpen(o => !o)}
+        >
+          <div className="flex items-start gap-3">
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${cfg.bg}`}>
+              <Icon className={`h-4 w-4 ${cfg.color}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-semibold text-foreground">{cfg.label}</span>
+                <code className="text-xs font-mono text-muted-foreground">{log.action}</code>
+              </div>
+              <div className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                <span>{log.ip_address}</span>
+                {log.user_id && <span className="font-mono truncate max-w-[120px]">{log.user_id.slice(0, 8)}…</span>}
+                {log.resource_type && <span>{log.resource_type}{log.resource_id ? ':' + log.resource_id.slice(0, 8) : ''}</span>}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <time className="text-xs text-muted-foreground">{format(new Date(log.created_at), 'HH:mm:ss')}</time>
+              {hasExtra && (open ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />)}
+            </div>
+          </div>
+
+          {open && hasExtra && (
+            <pre className="mt-3 overflow-x-auto rounded-lg bg-background p-3 text-xs font-mono text-muted-foreground">
               {JSON.stringify(log.metadata, null, 2)}
             </pre>
-          </td>
-        </tr>
-      )}
-    </>
+          )}
+        </div>
+      </div>
+    </motion.div>
   )
 }
 
@@ -81,98 +82,83 @@ export function AuditLogPage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin', 'audit-log', page, actionFilter],
-    queryFn: () =>
-      adminApi.getAuditLog({
-        page,
-        size: pageSize,
-        action: actionFilter || undefined,
-      }),
+    queryFn: () => adminApi.getAuditLog({ page, size: pageSize, action: actionFilter || undefined }),
   })
 
   const totalPages = data ? Math.ceil(data.total / pageSize) : 0
 
+  const grouped = (data?.logs ?? []).reduce<Record<string, AuditLogEntry[]>>((acc, log) => {
+    const day = format(new Date(log.created_at), 'MMM d, yyyy')
+    if (!acc[day]) acc[day] = []
+    acc[day].push(log)
+    return acc
+  }, {})
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header />
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Audit Log</h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Security event trail — {data?.total ?? 0} total events
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <select
-              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              value={actionFilter}
-              onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
-            >
-              <option value="">All actions</option>
-              {ACTION_OPTIONS.map((a) => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-            </select>
-          </div>
+    <div className="p-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Audit Log</h1>
+          <p className="text-sm text-muted-foreground">{data?.total ?? 0} total events</p>
         </div>
+      </div>
 
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          {isLoading ? (
-            <div className="py-20 text-center text-sm text-slate-500">Loading…</div>
-          ) : isError ? (
-            <div className="py-20 text-center text-sm text-red-500">Failed to load audit log.</div>
-          ) : (
-            <table className="w-full table-auto">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  <th className="px-4 py-3">Timestamp</th>
-                  <th className="px-4 py-3">Action</th>
-                  <th className="px-4 py-3">User ID</th>
-                  <th className="px-4 py-3">IP Address</th>
-                  <th className="px-4 py-3">Resource</th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.logs.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center text-sm text-slate-400">
-                      No audit events found.
-                    </td>
-                  </tr>
-                ) : (
-                  data?.logs.map((log) => <ExpandableRow key={log.id} log={log} />)
-                )}
-              </tbody>
-            </table>
-          )}
+      {/* Filters */}
+      <div className="flex gap-3 flex-wrap">
+        <div className="relative">
+          <Filter className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <select
+            className="input-dark pl-8 pr-8 appearance-none cursor-pointer"
+            value={actionFilter}
+            onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
+          >
+            <option value="">All actions</option>
+            {ACTION_OPTIONS.map(a => (
+              <option key={a} value={a}>{ACTION_CONFIG[a]?.label ?? a}</option>
+            ))}
+          </select>
         </div>
+      </div>
 
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
-            <span>Page {page} of {totalPages}</span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+      {/* Timeline */}
+      {isLoading ? (
+        <div className="py-16 text-center text-sm text-muted-foreground">Loading audit events…</div>
+      ) : isError ? (
+        <div className="py-16 text-center text-sm text-red-400">Failed to load audit log.</div>
+      ) : (
+        Object.entries(grouped).map(([day, logs]) => (
+          <div key={day}>
+            <div className="mb-3 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{day}</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            {/* Timeline line */}
+            <div className="relative border-l border-border ml-1.5 space-y-1">
+              {logs.map(log => <LogEntry key={log.id} log={log} />)}
             </div>
           </div>
-        )}
-      </main>
+        ))
+      )}
+
+      {data?.logs.length === 0 && (
+        <div className="py-16 text-center text-sm text-muted-foreground">No audit events found.</div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
+          <span>Page {page} of {totalPages}</span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -109,8 +109,10 @@ services:
     networks: [appnet]
     environment:
       <<: *common-env
+      ENV_FILE_PATH: /workspace/omnimind.env
     volumes:
       - ./backend:/app
+      - ./.env:/workspace/omnimind.env
     ports:
       - "8001:8000"
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
