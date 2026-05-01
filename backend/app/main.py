@@ -45,11 +45,18 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 register_middlewares(app)
 
 # Routers
-from app.api.v1 import admin, auth, health  # noqa: E402
+from app.api.v1 import admin, auth, health, jarvis  # noqa: E402
+from app.api.v1.telegram import router as telegram_webhook_router, link_router as telegram_link_router  # noqa: E402
+from app.api.v1.whatsapp import router as whatsapp_webhook_router, link_router as whatsapp_link_router  # noqa: E402
 
 app.include_router(health.router, prefix="/api/v1")
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
+app.include_router(jarvis.router, prefix="/api/v1")
+app.include_router(telegram_webhook_router, prefix="/api/v1")
+app.include_router(telegram_link_router, prefix="/api/v1")
+app.include_router(whatsapp_webhook_router, prefix="/api/v1")
+app.include_router(whatsapp_link_router, prefix="/api/v1")
 
 
 @app.get("/", include_in_schema=False)

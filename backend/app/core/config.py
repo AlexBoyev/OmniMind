@@ -53,6 +53,25 @@ class Settings(BaseSettings):
     SESSION_COOKIE_SAMESITE: str = "lax"
     SESSION_COOKIE_HTTPONLY: bool = True
 
+    # Jarvis / Claude AI
+    ANTHROPIC_API_KEY: str | None = None
+    CLAUDE_MODEL: str = "claude-opus-4-7"
+    CLAUDE_MAX_TOKENS: int = 2048
+    CLAUDE_SYSTEM_PROMPT: str = (
+        "You are Jarvis, the helpful AI assistant for OmniMind. "
+        "Be concise, friendly, and accurate. If you don't know, say so."
+    )
+    JARVIS_ADMIN_TOOLS_ENABLED: bool = True
+    JARVIS_HISTORY_LIMIT: int = 20
+
+    # Telegram
+    TELEGRAM_BOT_TOKEN: str | None = None
+
+    # Twilio / WhatsApp
+    TWILIO_ACCOUNT_SID: str | None = None
+    TWILIO_AUTH_TOKEN: str | None = None
+    TWILIO_WHATSAPP_FROM: str = "whatsapp:+14155238886"
+
     # Seed users
     SEED_ADMIN_EMAIL: str = "admin@omnimind.local"
     SEED_ADMIN_PASSWORD: str = "Admin1234!"

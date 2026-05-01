@@ -29,6 +29,12 @@ x-common-env: &common-env
   SEED_USER_EMAIL: ${SEED_USER_EMAIL:-user@omnimind.local}
   SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-UserPass123!}
   SEED_USER_FULL_NAME: ${SEED_USER_FULL_NAME:-Regular User}
+  # Phase 8 — AI / Bots (optional; omit if not configured)
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-opus-4-7}
+  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+  TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+  TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
 
 networks:
   appnet:

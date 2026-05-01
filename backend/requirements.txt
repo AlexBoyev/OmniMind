@@ -28,6 +28,11 @@ slowapi==0.1.9
 # Metrics
 prometheus-fastapi-instrumentator==7.1.0
 
+# AI / Bots
+anthropic>=0.25.0
+python-telegram-bot[webhooks]>=21.0
+twilio>=9.0.0
+
 # Logging
 structlog==25.3.0
 

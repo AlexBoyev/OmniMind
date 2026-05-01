@@ -22,6 +22,9 @@ from app.db.base import Base  # noqa: F401, E402
 from app.models.user import User  # noqa: F401, E402
 from app.models.refresh_token import RefreshToken  # noqa: F401, E402
 from app.models.audit_log import AuditLog  # noqa: F401, E402
+from app.models.conversation import Conversation, Message  # noqa: F401, E402
+from app.models.telegram_link import TelegramLink  # noqa: F401, E402
+from app.models.whatsapp_link import WhatsAppLink  # noqa: F401, E402
 
 target_metadata = Base.metadata
 

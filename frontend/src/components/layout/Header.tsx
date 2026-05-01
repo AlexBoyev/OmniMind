@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useAuth } from '@/hooks/useAuth'
+import { useJarvisStore } from '@/store/jarvisStore'
 import { Button } from '@/components/ui/button'
 import { ChevronDown, Brain } from 'lucide-react'
 
 export function Header() {
   const { user } = useAuthStore()
   const { logout, isAdmin } = useAuth()
+  const { toggle: toggleJarvis } = useJarvisStore()
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
@@ -19,6 +21,15 @@ export function Header() {
         </Link>
 
         <nav className="flex items-center gap-4">
+          {import.meta.env.VITE_ENABLE_JARVIS === 'true' && (
+            <button
+              onClick={toggleJarvis}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+            >
+              <Brain className="h-4 w-4" />
+              Ask Jarvis
+            </button>
+          )}
           {isAdmin() && (
             <div className="flex items-center gap-3">
               <Link
