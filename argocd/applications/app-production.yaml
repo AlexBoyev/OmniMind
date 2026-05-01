@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: omnimind-production
+  namespace: argocd
+spec:
+  project: omnimind
+  source:
+    repoURL: https://github.com/AlexBoyev/OmniMind.git
+    targetRevision: master
+    path: k8s/overlays/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: omnimind-production
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=true

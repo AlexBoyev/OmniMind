@@ -148,6 +148,43 @@ function Invoke-MinikubeStatus {
     kubectl get nodes
 }
 
+function Invoke-JenkinsInstall {
+    Write-Host "Installing Jenkins via Helm..." -ForegroundColor Cyan
+    & scripts\install-jenkins.ps1
+}
+
+function Invoke-JenkinsUrl {
+    $ip = & minikube ip
+    Write-Host "http://${ip}:32000" -ForegroundColor Green
+}
+
+function Invoke-JenkinsPassword {
+    $encoded = kubectl get secret jenkins -n jenkins -o jsonpath="{.data.jenkins-admin-password}"
+    $bytes = [System.Convert]::FromBase64String($encoded)
+    Write-Host ([System.Text.Encoding]::UTF8.GetString($bytes)) -ForegroundColor Green
+}
+
+function Invoke-ArgocdInstall {
+    Write-Host "Installing ArgoCD..." -ForegroundColor Cyan
+    & scripts\install-argocd.ps1
+}
+
+function Invoke-ArgocdUrl {
+    $ip = & minikube ip
+    Write-Host "http://${ip}:32001" -ForegroundColor Green
+}
+
+function Invoke-ArgocdPassword {
+    $encoded = kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}"
+    $bytes = [System.Convert]::FromBase64String($encoded)
+    Write-Host ([System.Text.Encoding]::UTF8.GetString($bytes)) -ForegroundColor Green
+}
+
+function Invoke-ArgocdConfigure {
+    Write-Host "Configuring ArgoCD (requires GITHUB_USERNAME and GITHUB_TOKEN)..." -ForegroundColor Cyan
+    & scripts\configure-argocd.ps1
+}
+
 function Invoke-Help {
     Write-Host ""
     Write-Host "  OmniMind — available .\make.ps1 targets" -ForegroundColor Green
@@ -176,7 +213,14 @@ function Invoke-Help {
         @{ Name = "minikube-up";             Desc = "Start Minikube with 4 CPUs and 8 GB RAM" },
         @{ Name = "minikube-stop";           Desc = "Stop Minikube without deleting the cluster" },
         @{ Name = "minikube-status";         Desc = "Show Minikube and kubectl cluster status" },
-        @{ Name = "help";             Desc = "Show this help message" }
+        @{ Name = "jenkins-install";   Desc = "Install Jenkins via Helm" },
+        @{ Name = "jenkins-url";       Desc = "Print Jenkins URL" },
+        @{ Name = "jenkins-password";  Desc = "Print Jenkins admin password" },
+        @{ Name = "argocd-install";    Desc = "Install ArgoCD" },
+        @{ Name = "argocd-url";        Desc = "Print ArgoCD URL" },
+        @{ Name = "argocd-password";   Desc = "Print ArgoCD initial admin password" },
+        @{ Name = "argocd-configure";  Desc = "Configure ArgoCD (set GITHUB_USERNAME + GITHUB_TOKEN first)" },
+        @{ Name = "help";              Desc = "Show this help message" }
     )
     foreach ($t in $targets) {
         Write-Host ("  {0,-22} {1}" -f $t.Name, $t.Desc) -ForegroundColor Cyan
@@ -210,6 +254,13 @@ switch ($Target) {
     "minikube-delete"         { Invoke-MinikubeDelete }
     "minikube-deploy"         { Invoke-MinikubeDeploy }
     "minikube-status"         { Invoke-MinikubeStatus }
+    "jenkins-install"  { Invoke-JenkinsInstall }
+    "jenkins-url"      { Invoke-JenkinsUrl }
+    "jenkins-password" { Invoke-JenkinsPassword }
+    "argocd-install"   { Invoke-ArgocdInstall }
+    "argocd-url"       { Invoke-ArgocdUrl }
+    "argocd-password"  { Invoke-ArgocdPassword }
+    "argocd-configure" { Invoke-ArgocdConfigure }
     "help"             { Invoke-Help }
     default {
         Write-Host "Unknown target: '$Target'. Run .\make.ps1 help to see available targets." -ForegroundColor Red

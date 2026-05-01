@@ -117,6 +117,38 @@ minikube-deploy: ## Apply staging Kustomize overlay to Minikube (alias: minikube
 minikube-status: ## Show Minikube and kubectl cluster status
 	minikube status && kubectl get nodes
 
+# ─── Jenkins ──────────────────────────────────────────────────────────────────
+
+.PHONY: jenkins-install
+jenkins-install: ## Install Jenkins via Helm into the jenkins namespace
+	bash scripts/install-jenkins.sh
+
+.PHONY: jenkins-url
+jenkins-url: ## Print Jenkins URL
+	@echo "http://$(shell minikube ip):32000"
+
+.PHONY: jenkins-password
+jenkins-password: ## Print Jenkins admin password
+	@kubectl get secret jenkins -n jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 -d && echo
+
+# ─── ArgoCD ───────────────────────────────────────────────────────────────────
+
+.PHONY: argocd-install
+argocd-install: ## Install ArgoCD into the argocd namespace
+	bash scripts/install-argocd.sh
+
+.PHONY: argocd-url
+argocd-url: ## Print ArgoCD URL
+	@echo "http://$(shell minikube ip):32001"
+
+.PHONY: argocd-password
+argocd-password: ## Print ArgoCD initial admin password
+	@kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d && echo
+
+.PHONY: argocd-configure
+argocd-configure: ## Configure ArgoCD (requires GITHUB_USERNAME and GITHUB_TOKEN env vars)
+	bash scripts/configure-argocd.sh
+
 # ─── Help ─────────────────────────────────────────────────────────────────────
 
 .PHONY: help

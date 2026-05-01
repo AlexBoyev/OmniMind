@@ -1,0 +1,24 @@
+# Jenkins Helm chart values reference
+# Used by scripts/install-jenkins.sh (via --set flags, not this file directly)
+# This file documents the configuration for reference.
+
+controller:
+  adminUser: admin
+  adminPassword: changeme_jenkins  # Override via JENKINS_ADMIN_PASSWORD env var
+  serviceType: NodePort
+  nodePort: 32000
+
+  installPlugins:
+    - kubernetes
+    - workflow-aggregator
+    - git
+    - github
+    - github-branch-source
+    - docker-workflow
+    - configuration-as-code
+    - credentials-binding
+    - pipeline-stage-view
+    - blueocean
+
+persistence:
+  size: 10Gi
