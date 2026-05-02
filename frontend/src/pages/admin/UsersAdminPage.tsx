@@ -6,10 +6,12 @@ import { adminApi } from '@/api/admin'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
 import { format } from 'date-fns'
+import { useAuthStore } from '@/store/authStore'
 import type { User } from '@/types/user.types'
 
 export function UsersAdminPage() {
   const [page, setPage] = useState(1)
+  const currentUser = useAuthStore((s) => s.user)
   const [search, setSearch] = useState('')
   const pageSize = 10
   const qc = useQueryClient()
@@ -110,17 +112,23 @@ export function UsersAdminPage() {
                     }
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => toggleMutation.mutate({ id: user.id, is_active: !user.is_active })}
-                      disabled={toggleMutation.isPending}
-                      title={user.is_active ? 'Deactivate' : 'Activate'}
-                      className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                    >
-                      {user.is_active
-                        ? <ToggleRight className="h-5 w-5 text-emerald-400" />
-                        : <ToggleLeft className="h-5 w-5" />
-                      }
-                    </button>
+                    {user.id === currentUser?.id ? (
+                      <span title="You cannot deactivate your own account" className="cursor-not-allowed opacity-30">
+                        <ToggleRight className="h-5 w-5 text-emerald-400" />
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => toggleMutation.mutate({ id: user.id, is_active: !user.is_active })}
+                        disabled={toggleMutation.isPending}
+                        title={user.is_active ? 'Deactivate' : 'Activate'}
+                        className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                      >
+                        {user.is_active
+                          ? <ToggleRight className="h-5 w-5 text-emerald-400" />
+                          : <ToggleLeft className="h-5 w-5" />
+                        }
+                      </button>
+                    )}
                   </td>
                 </motion.tr>
               ))
