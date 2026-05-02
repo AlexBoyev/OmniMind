@@ -7,6 +7,20 @@
 .DEFAULT_GOAL := help
 COMPOSE := docker compose
 
+# ─── Access Guide ─────────────────────────────────────────────────────────────
+
+.PHONY: urls
+urls: ## Print all service URLs and credentials
+	bash scripts/get-urls.sh
+
+.PHONY: tunnels
+tunnels: ## Start kubectl port-forwards for all Minikube services
+	bash scripts/setup-port-forwards.sh
+
+.PHONY: sync-urls
+sync-urls: ## Update .env with current Minikube service URLs
+	bash scripts/sync-minikube-urls.sh
+
 # ─── Stack Lifecycle ──────────────────────────────────────────────────────────
 
 .PHONY: up

@@ -23,16 +23,33 @@ router = APIRouter(prefix="/admin/system", tags=["system"])
 
 _start_time = time.time()
 
-SERVICES = [
-    {"name": "Backend API",  "url": "http://localhost:8001/api/v1/health", "internal_url": "http://localhost:8000/api/v1/health"},
-    {"name": "Frontend",     "url": "http://localhost:3000",               "internal_url": "http://frontend:3000"},
-    {"name": "pgAdmin",      "url": "http://localhost:5050",               "internal_url": "http://pgadmin:80"},
-    {"name": "Mailpit",      "url": "http://localhost:8025",               "internal_url": "http://mailpit:8025"},
-    {"name": "Jenkins",      "url": "http://192.168.49.2:32000",          "internal_url": "http://192.168.49.2:32000"},
-    {"name": "ArgoCD",       "url": "http://192.168.49.2:32001",          "internal_url": "http://192.168.49.2:32001"},
-    {"name": "Grafana",      "url": "http://192.168.49.2:32002",          "internal_url": "http://192.168.49.2:32002"},
-    {"name": "Prometheus",   "url": "http://192.168.49.2:32003",          "internal_url": "http://192.168.49.2:32003"},
-]
+import os as _os
+
+def _get_services() -> list[dict]:
+    """Build service list using VITE_* env vars for display URLs and Docker-internal URLs for health checks."""
+    # For Docker-internal reachable services, use service names
+    # For external services (Jenkins/ArgoCD on Minikube), try to reach the configured URL
+    jenkins_url    = _os.environ.get("VITE_JENKINS_URL", "http://localhost:32000")
+    argocd_url     = _os.environ.get("VITE_ARGOCD_URL", "http://localhost:32001")
+    grafana_url    = _os.environ.get("VITE_GRAFANA_URL", "http://localhost:32002")
+    prometheus_url = _os.environ.get("VITE_PROMETHEUS_URL", "http://localhost:32003")
+    pgadmin_url    = _os.environ.get("VITE_PGADMIN_URL", "http://localhost:5050")
+    mailpit_url    = _os.environ.get("VITE_MAILPIT_URL", "http://localhost:8025")
+
+    return [
+        {"name": "Backend API",  "url": "http://localhost:8001/api/v1/health", "internal_url": "http://localhost:8000/api/v1/health"},
+        {"name": "Frontend",     "url": "http://localhost:3000",               "internal_url": "http://frontend:3000"},
+        {"name": "pgAdmin",      "url": pgadmin_url,                           "internal_url": "http://pgadmin:80"},
+        {"name": "Mailpit",      "url": mailpit_url,                           "internal_url": "http://mailpit:8025"},
+        # For Jenkins/ArgoCD/Grafana/Prometheus — these are on Minikube, reachable only via host port-forwards
+        # The backend container uses the same localhost:PORT tunnel that the host machine set up
+        {"name": "Jenkins",      "url": jenkins_url,    "internal_url": jenkins_url},
+        {"name": "ArgoCD",       "url": argocd_url,     "internal_url": argocd_url},
+        {"name": "Grafana",      "url": grafana_url,    "internal_url": grafana_url},
+        {"name": "Prometheus",   "url": prometheus_url, "internal_url": prometheus_url},
+    ]
+
+SERVICES = _get_services()  # evaluated once at startup; read env at import time
 
 
 async def _ping(url: str, timeout: float = 2.5) -> str:

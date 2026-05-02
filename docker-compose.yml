@@ -35,6 +35,13 @@ x-common-env: &common-env
   TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
   TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
   TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+  # Phase 10 — Service URLs (read by system.py for health dashboard)
+  VITE_JENKINS_URL: ${VITE_JENKINS_URL:-http://localhost:32000}
+  VITE_ARGOCD_URL: ${VITE_ARGOCD_URL:-http://localhost:32001}
+  VITE_GRAFANA_URL: ${VITE_GRAFANA_URL:-http://localhost:32002}
+  VITE_PROMETHEUS_URL: ${VITE_PROMETHEUS_URL:-http://localhost:32003}
+  VITE_PGADMIN_URL: ${VITE_PGADMIN_URL:-http://localhost:5050}
+  VITE_MAILPIT_URL: ${VITE_MAILPIT_URL:-http://localhost:8025}
 
 networks:
   appnet:

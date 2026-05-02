@@ -50,6 +50,7 @@ from app.api.v1.telegram import router as telegram_webhook_router, link_router a
 from app.api.v1.whatsapp import router as whatsapp_webhook_router, link_router as whatsapp_link_router  # noqa: E402
 from app.api.v1.system import router as system_router  # noqa: E402
 from app.api.v1.env_manager import router as env_manager_router  # noqa: E402
+from app.api.v1.proxy import router as proxy_router  # noqa: E402
 
 app.include_router(health.router, prefix="/api/v1")
 app.include_router(auth.router, prefix="/api/v1")
@@ -61,6 +62,7 @@ app.include_router(whatsapp_webhook_router, prefix="/api/v1")
 app.include_router(whatsapp_link_router, prefix="/api/v1")
 app.include_router(system_router, prefix="/api/v1")
 app.include_router(env_manager_router, prefix="/api/v1")
+app.include_router(proxy_router, prefix="/api/v1")
 
 
 @app.get("/", include_in_schema=False)
