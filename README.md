@@ -134,6 +134,109 @@ OmniMind/
 | 10 | Fix all packages, Minikube access, complete setup | Complete |
 | 11 | Framer-motion fix, scripts, user guides | Complete |
 
+## 🤖 ai-dev — Smart AI Dev Launcher
+
+A lightweight CLI wrapper that rotates between Claude and free AI models to keep you coding
+without interruption. When Claude hits its usage limit, it auto-switches to free models
+(Gemini, Qwen3, DeepSeek) so you never have to stop and wait.
+
+---
+
+### Why it exists
+
+Claude Code CLI is powerful but has a 4-hour cooldown after heavy usage.
+`ai-dev.py` tracks that cooldown and automatically routes your task to the best
+available free model so work continues uninterrupted.
+
+---
+
+### Models used
+
+| Model | Type | Used for |
+|-------|------|----------|
+| Claude Sonnet | Paid (Anthropic) | Default — complex tasks, refactoring, architecture |
+| Gemini 2.5 Pro | Free (Google) | File reading, code review, exploration |
+| Qwen3 Coder | Free (OpenRouter) | Boilerplate, docstrings, repetitive edits |
+| DeepSeek R1 | Free (OpenRouter) | Last fallback, reasoning-heavy tasks |
+
+---
+
+### Usage
+
+**Interactive launcher (recommended):**
+```powershell
+.\ai-dev.bat
+```
+Opens a persistent menu — pick a mode, type your prompt, done. No retyping commands.
+
+**Direct command:**
+```powershell
+python ai-dev.py "your task here"
+python ai-dev.py --mode cheap "explain this file" src/api/routes.py
+python ai-dev.py --mode fast "add docstrings" utils/helpers.py
+python ai-dev.py --review-chain "add webhook support" src/api/webhooks.py
+```
+
+---
+
+### Modes
+
+| Mode | Flag | Model | Best for |
+|------|------|-------|----------|
+| auto | *(default)* | Claude Sonnet | General tasks, decides automatically |
+| daily | `--mode daily` | Claude Sonnet | Bug fixes, tests, config changes |
+| cheap | `--mode cheap` | Gemini free | Reading/exploring large files |
+| fast | `--mode fast` | Qwen3 free | Boilerplate, docstrings, repetitive code |
+| review | `--mode review` | Gemini free | Code review, security checks |
+| chain | `--review-chain` | All 3 models | Full write + review pipeline |
+
+---
+
+### 3-Model Review Chain
+
+The most powerful mode — runs a full pipeline on your code:
+
+1. **Claude** writes the implementation
+2. **Gemini** does a harsh review — bugs, missing error handling, edge cases
+3. **Qwen3** checks integration and sets final verdict: `READY TO MERGE` or `NEEDS FIXES`
+
+Result saved to `collab.md` in the project root.
+
+```powershell
+python ai-dev.py --review-chain "add rate limiting to auth endpoints" src/auth/routes.py
+```
+
+---
+
+### Token management
+
+```powershell
+python ai-dev.py --status    # see which models are available right now
+python ai-dev.py --burned    # manually mark Claude as cooling down (4h timer starts)
+python ai-dev.py --reset     # reset cooldown early
+```
+
+---
+
+### Setup
+
+1. Install Aider (required for free model routing):
+```powershell
+pip install aider-chat
+```
+
+2. Add API keys to `.env`:
+```env
+GEMINI_API_KEY=your_key_here       # https://aistudio.google.com
+OPENROUTER_API_KEY=your_key_here   # https://openrouter.ai
+```
+
+3. Check everything is ready:
+```powershell
+python ai-dev.py --status
+```
+
+
 ## Documentation
 
 - [User Guide](docs/USER_GUIDE.md) — how to use the app
