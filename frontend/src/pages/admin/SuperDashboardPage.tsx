@@ -174,12 +174,12 @@ export function SuperDashboardPage() {
             <ServiceCard key={svc.name} svc={svc} status={healthMap ? (healthMap[svc.name] ?? 'offline') : 'checking'} />
           ))}
         </div>
-        {!ENV.JENKINS && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            💡 Jenkins/ArgoCD/Grafana/Prometheus show "Not configured" — run{' '}
-            <code className="font-mono">bash scripts/setup-port-forwards.sh</code> then rebuild frontend.
-          </p>
-        )}
+        <p className="mt-2 text-xs text-muted-foreground">
+          On Windows: run{' '}
+          <code className="font-mono text-primary">.\scripts\open-k8s-services.ps1</code>
+          {' '}to open Minikube tunnels — each window prints the working URL.
+          Linux/macOS: <code className="font-mono text-primary">bash scripts/setup-port-forwards.sh</code>
+        </p>
       </div>
 
       {/* Quick links */}
