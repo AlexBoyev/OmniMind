@@ -46,9 +46,13 @@ def setup_logging() -> None:
     root_logger.handlers = [handler]
     root_logger.setLevel(log_level)
 
-    # Quieten noisy libs
-    for noisy in ("uvicorn.access", "uvicorn.error", "sqlalchemy.engine"):
-        logging.getLogger(noisy).setLevel(logging.WARNING)
+    # Suppress SQLAlchemy query noise (healthcheck SELECT 1 spam)
+    for noisy in ("sqlalchemy.engine", "sqlalchemy.engine.Engine",
+                  "sqlalchemy.pool", "sqlalchemy.dialects"):
+        logging.getLogger(noisy).setLevel(logging.ERROR)
+    # Keep uvicorn error logs visible; suppress per-request access noise
+    logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 
 def get_logger(name: str = __name__) -> structlog.stdlib.BoundLogger:

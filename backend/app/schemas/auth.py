@@ -4,17 +4,27 @@ import re
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.models.user import Role
 
 _PASSWORD_RE = re.compile(r"^(?=.*[A-Za-z])(?=.*\d).{8,}$")
+# Accepts standard emails plus .local / .internal / .dev TLDs used in dev environments
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 class RegisterRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(min_length=5, max_length=254)
     username: str = Field(min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_-]+$")
     password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not _EMAIL_RE.match(v):
+            raise ValueError("Invalid email address format.")
+        return v
 
     @field_validator("password")
     @classmethod

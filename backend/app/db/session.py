@@ -10,7 +10,7 @@ from app.core.config import settings
 
 async_engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=settings.ENVIRONMENT == "development",
+    echo=settings.LOG_LEVEL.upper() == "DEBUG",  # only log SQL when LOG_LEVEL=DEBUG
     pool_size=5,
     max_overflow=10,
 )
