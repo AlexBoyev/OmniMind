@@ -82,12 +82,6 @@ def make_aider(model, editor=None):
 
 
 TOOLS = {
-    "claude-opus": {
-        "name": "Claude Code (Opus)",
-        "binary": "claude",
-        "free": False,
-        "build": make_claude("claude-opus-4-7"),
-    },
     "claude-sonnet": {
         "name": "Claude Code (Sonnet)",
         "binary": "claude",
@@ -118,7 +112,6 @@ TOOLS = {
 }
 
 MODE_MAP = {
-    "hard": "claude-opus",
     "daily": "claude-sonnet",
     "cheap": "aider-gemini",
     "review": "aider-gemini",
@@ -372,7 +365,6 @@ def show_status():
     p("  next    : " + (TOOLS[next_tid]["name"] if next_tid else "none -- check setup"))
     p()
     p("  Modes:")
-    p("    --mode hard         Claude Opus      new features, architecture")
     p("    --mode daily        Claude Sonnet    bug fixes, tests, configs")
     p("    --mode cheap        Gemini free      file reads, exploration")
     p("    --mode fast         Qwen3 free       boilerplate, docstrings")
