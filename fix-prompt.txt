@@ -1,0 +1,46 @@
+Fix ALL of the following issues in the OmniMind project:
+
+ISSUE 1: Register endpoint not working
+- POST /api/v1/auth/register is failing
+- Check backend/app/api/v1/auth/routes.py
+- Check backend/app/services/auth_service.py
+- Check if DB migrations ran: run `alembic upgrade head` if needed
+- Check if email domain validation is blocking @omnimind.local
+- Fix whatever is broken and confirm register works
+
+ISSUE 2: Default credentials not working
+- admin@omnimind.local / AdminPass123! -- login fails
+- user@omnimind.local / UserPass123! -- login fails
+- Restarting containers did NOT fix it
+- Check if DB seed/init script ran: backend/app/db/init_db.py or seeds/
+- If users do not exist in DB, re-create them with correct bcrypt hashed passwords
+- Check password hashing is consistent (bcrypt rounds match between seed and login)
+- Fix and verify both accounts can log in
+
+ISSUE 3: Jenkins / ArgoCD credentials are REPLACE_ME placeholders
+- .env has: JENKINS_TOKEN=REPLACE_ME and ARGOCD_PASSWORD=REPLACE_ME
+- Jenkins is at http://localhost:32000 (Minikube port-forward)
+- ArgoCD is at http://localhost:32001 (Minikube port-forward)
+- Grafana is at http://localhost:32002 -- not accessible at all
+
+For Jenkins:
+- Get the real admin password: kubectl get secret jenkins -n jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode
+- Update JENKINS_TOKEN in .env with the real value
+
+For ArgoCD:
+- Get the real password: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 --decode
+- Update ARGOCD_PASSWORD in .env with the real value
+
+For Grafana:
+- Check if pod is running: kubectl get pods -n monitoring
+- If CrashLoopBackOff or Pending, fix the pod
+- Get grafana service: kubectl get svc -n monitoring
+- Set up port-forward: kubectl port-forward svc/kube-prometheus-stack-grafana 32002:80 -n monitoring
+- Default credentials: admin / changeme (or check GRAFANA_ADMIN_PASSWORD in .env)
+
+After ALL fixes:
+1. Run docker compose ps -- all containers must be Running
+2. Test register: curl -X POST http://localhost:8001/api/v1/auth/register -H "Content-Type: application/json" -d "{\"email\":\"test@omnimind.local\",\"password\":\"Test123!\",\"username\":\"testuser\"}"
+3. Test login: curl -X POST http://localhost:8001/api/v1/auth/login -H "Content-Type: application/json" -d "{\"email\":\"admin@omnimind.local\",\"password\":\"AdminPass123!\"}"
+4. Print all working credentials to console
+5. Commit: git add . && git commit -m "phase 13: fix register, default credentials, k8s service credentials"

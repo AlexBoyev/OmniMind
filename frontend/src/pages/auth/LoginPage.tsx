@@ -1,8 +1,7 @@
-import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
@@ -19,8 +18,15 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+function loginErrorMessage(err: unknown): string {
+  const status = (err as any)?.response?.status
+  if (status === 401) return 'Invalid credentials. Please check your email/username and password.'
+  if (status === 403) return 'Your account has been deactivated. Contact an admin.'
+  if (!(err as any)?.response) return 'Cannot reach the server. Is Docker running?'
+  return 'Login failed. Please try again.'
+}
+
 export function LoginPage() {
-  const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
   const { isAuthenticated } = useAuthStore()
@@ -32,20 +38,15 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
-  useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard', { replace: true })
-  }, [isAuthenticated, navigate])
+  if (isAuthenticated) return <Navigate to={returnTo} replace />
 
   const onSubmit = async (values: FormValues) => {
     try {
       await login(values.email_or_username, values.password)
-      navigate(returnTo, { replace: true })
-    } catch {
-      toast({ title: 'Login failed', description: 'Invalid credentials.', variant: 'destructive' })
+    } catch (err: unknown) {
+      toast({ title: 'Login failed', description: loginErrorMessage(err), variant: 'destructive' })
     }
   }
-
-  if (isAuthenticated) return null
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
@@ -62,7 +63,12 @@ export function LoginPage() {
           <CardContent className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="email_or_username">Email or username</Label>
-              <Input id="email_or_username" placeholder="you@example.com" {...register('email_or_username')} />
+              <Input
+                id="email_or_username"
+                placeholder="you@example.com"
+                autoComplete="username"
+                {...register('email_or_username')}
+              />
               {errors.email_or_username && (
                 <p className="text-xs text-red-600">{errors.email_or_username.message}</p>
               )}
@@ -70,7 +76,13 @@ export function LoginPage() {
 
             <div className="space-y-1">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                autoComplete="current-password"
+                {...register('password')}
+              />
               {errors.password && (
                 <p className="text-xs text-red-600">{errors.password.message}</p>
               )}

@@ -1,8 +1,7 @@
-import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { authApi } from '@/api/auth'
 import { useAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
@@ -15,8 +14,12 @@ import { Brain } from 'lucide-react'
 
 const schema = z
   .object({
-    email: z.string().email('Invalid email'),
-    username: z.string().min(3, 'At least 3 characters'),
+    email: z.string().email('Invalid email address'),
+    username: z
+      .string()
+      .min(3, 'At least 3 characters')
+      .max(50, 'Max 50 characters')
+      .regex(/^[a-zA-Z0-9_-]+$/, 'Only letters, numbers, _ and - allowed'),
     password: z
       .string()
       .min(8, 'At least 8 characters')
@@ -31,6 +34,14 @@ const schema = z
 
 type FormValues = z.infer<typeof schema>
 
+function extractApiError(err: unknown, fallback: string): string {
+  const detail = (err as any)?.response?.data?.detail
+  if (!detail) return fallback
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) return detail.map((e: any) => e.msg ?? 'Validation error').join('. ')
+  return fallback
+}
+
 export function RegisterPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
@@ -42,24 +53,40 @@ export function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
-  useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard', { replace: true })
-  }, [isAuthenticated, navigate])
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />
 
   const onSubmit = async (values: FormValues) => {
+    // Step 1: register
     try {
       await authApi.register(values.email, values.username, values.password)
-      await login(values.email, values.password)
-      navigate('/dashboard', { replace: true })
     } catch (err: unknown) {
+      const status = (err as any)?.response?.status
       const msg =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-        'Registration failed.'
-      toast({ title: 'Error', description: msg, variant: 'destructive' })
+        status === 409
+          ? extractApiError(err, 'Email or username is already taken.')
+          : status === 422
+          ? extractApiError(err, 'Invalid input. Check your details.')
+          : !(err as any)?.response
+          ? 'Cannot reach the server. Is Docker running?'
+          : extractApiError(err, 'Registration failed.')
+      toast({ title: 'Registration failed', description: msg, variant: 'destructive' })
+      return
+    }
+
+    // Step 2: auto-login after successful register
+    try {
+      await login(values.email, values.password)
+      // isAuthenticated → true → <Navigate to="/dashboard"> fires above
+    } catch {
+      // Register succeeded but login failed — send to login
+      toast({
+        title: 'Account created!',
+        description: 'Your account is ready. Please sign in.',
+        variant: 'default',
+      })
+      navigate('/login', { replace: true })
     }
   }
-
-  if (isAuthenticated) return null
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
@@ -76,25 +103,48 @@ export function RegisterPage() {
           <CardContent className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" {...register('email')} />
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
+                {...register('email')}
+              />
               {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-1">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" placeholder="your_username" {...register('username')} />
+              <Input
+                id="username"
+                placeholder="letters, numbers, _ and - only"
+                autoComplete="username"
+                {...register('username')}
+              />
               {errors.username && <p className="text-xs text-red-600">{errors.username.message}</p>}
             </div>
 
             <div className="space-y-1">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="Min 8 chars, letter + digit" {...register('password')} />
+              <Input
+                id="password"
+                type="password"
+                placeholder="Min 8 chars, letter + digit"
+                autoComplete="new-password"
+                {...register('password')}
+              />
               {errors.password && <p className="text-xs text-red-600">{errors.password.message}</p>}
             </div>
 
             <div className="space-y-1">
               <Label htmlFor="confirmPassword">Confirm password</Label>
-              <Input id="confirmPassword" type="password" placeholder="••••••••" {...register('confirmPassword')} />
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                autoComplete="new-password"
+                {...register('confirmPassword')}
+              />
               {errors.confirmPassword && (
                 <p className="text-xs text-red-600">{errors.confirmPassword.message}</p>
               )}
